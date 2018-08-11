@@ -1,0 +1,3 @@
+name: standard-library-tests
+include: .
+depend: standard-library

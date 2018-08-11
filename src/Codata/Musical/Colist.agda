@@ -89,13 +89,27 @@ module All-injective {a p} {A : Set a} {P : A → Set p} where
 ------------------------------------------------------------------------
 -- Some operations
 
-null : ∀ {a} {A : Set a} → Colist A → Bool
-null []      = true
-null (_ ∷ _) = false
+module _ {a} {A : Set a} where
 
-length : ∀ {a} {A : Set a} → Colist A → Coℕ
-length []       = zero
-length (x ∷ xs) = suc (♯ length (♭ xs))
+  null : Colist A → Bool
+  null []      = true
+  null (_ ∷ _) = false
+
+  length : Colist A → Coℕ
+  length []       = zero
+  length (x ∷ xs) = suc (♯ length (♭ xs))
+
+  head : Colist A → Maybe A
+  head []       = nothing
+  head (x ∷ xs) = just x
+
+  tail : Colist A → Maybe (Colist A)
+  tail []       = nothing
+  tail (x ∷ xs) = just (♭ xs)
+
+  uncons : Colist A → Maybe (A × Colist A)
+  uncons []       = nothing
+  uncons (x ∷ xs) = just (x , ♭ xs)
 
 map : ∀ {a b} {A : Set a} {B : Set b} → (A → B) → Colist A → Colist B
 map f []       = []
