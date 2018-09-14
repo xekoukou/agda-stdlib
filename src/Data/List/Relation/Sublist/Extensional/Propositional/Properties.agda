@@ -195,8 +195,7 @@ module _ {a p} {A : Set a} {P : A → Set p} (P? : Decidable P) where
 ------------------------------------------------------------------------
 -- DEPRECATED
 ------------------------------------------------------------------------
-
--- Version 0.16
+-- Please use `filter` instead of `boolFilter`
 
 boolFilter-⊆ : ∀ {a} {A : Set a} (p : A → Bool) →
                (xs : List A) → boolFilter p xs ⊆ xs
@@ -204,10 +203,6 @@ boolFilter-⊆ _ []       = λ ()
 boolFilter-⊆ p (x ∷ xs) with p x | boolFilter-⊆ p xs
 ... | false | hyp = there ∘ hyp
 ... | true  | hyp =
-  λ { (here  eq)          → here eq
+  λ { (here  eq)      → here eq
     ; (there ∈boolFilter) → there (hyp ∈boolFilter)
     }
-{-# WARNING_ON_USAGE boolFilter-⊆
-"Warning: boolFilter was deprecated in v0.15.
-Please use filter instead."
-#-}
