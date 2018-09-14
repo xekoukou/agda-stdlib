@@ -391,17 +391,5 @@ True↔ (no ¬p) _   = inverse (λ()) ¬p (λ()) (⊥-elim ∘ ¬p)
 -- Version 0.17
 
 ×-CommutativeMonoid = ×-commutativeMonoid
-{-# WARNING_ON_USAGE ×-CommutativeMonoid
-"Warning: ×-CommutativeMonoid was deprecated in v0.17.
-Please use ×-commutativeMonoid instead."
-#-}
 ⊎-CommutativeMonoid = ⊎-commutativeMonoid
-{-# WARNING_ON_USAGE ⊎-CommutativeMonoid
-"Warning: ⊎-CommutativeMonoid was deprecated in v0.17.
-Please use ⊎-commutativeMonoid instead."
-#-}
 ×⊎-CommutativeSemiring = ×-⊎-commutativeSemiring
-{-# WARNING_ON_USAGE ×⊎-CommutativeSemiring
-"Warning: ×⊎-CommutativeSemiring was deprecated in v0.17.
-Please use ×-⊎-commutativeSemiring instead."
-#-}

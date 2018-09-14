@@ -331,10 +331,6 @@ module EquationalReasoning where
   X ∎ = K-refl
 
   sym = SK-sym
-  {-# WARNING_ON_USAGE sym
-  "Warning: EquationalReasoning.sym was deprecated in v0.17.
-  Please use SK-sym instead."
-  #-}
 
 ------------------------------------------------------------------------
 -- Every unary relation induces a preorder and, for symmetric kinds,
@@ -414,12 +410,4 @@ InducedEquivalence₂ k _S_ = record
 -- Version 0.17
 
 preorder = K-preorder
-{-# WARNING_ON_USAGE preorder
-"Warning: preorder was deprecated in v0.17.
-Please use K-preorder instead."
-#-}
 setoid = SK-setoid
-{-# WARNING_ON_USAGE setoid
-"Warning: setoid was deprecated in v0.17.
-Please use SK-setoid instead."
-#-}
