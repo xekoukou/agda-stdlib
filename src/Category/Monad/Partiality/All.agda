@@ -11,6 +11,7 @@ open import Category.Monad.Partiality as Partiality using (_⊥; ⇒≈)
 open import Codata.Musical.Notation
 open import Function
 open import Level
+open import Relation.Unary
 open import Relation.Binary using (_Respects_; IsEquivalence)
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 
@@ -29,7 +30,7 @@ private
 -- All P x means that if x terminates with the value v, then P v
 -- holds.
 
-data All {a p} {A : Set a} (P : A → Set p) : A ⊥ → Set (a ⊔ p) where
+data All {a p} {A : Set a} (P : Pred A p) : Pred (A ⊥) p where
   now   : ∀ {v} (p : P v)             → All P (now v)
   later : ∀ {x} (p : ∞ (All P (♭ x))) → All P (later x)
 
