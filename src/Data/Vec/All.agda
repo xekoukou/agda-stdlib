@@ -22,32 +22,29 @@ open import Relation.Binary.PropositionalEquality as P using (subst)
 
 infixr 5 _∷_
 
-data All {a p} {A : Set a}
-         (P : A → Set p) : ∀ {k} → Vec A k → Set (p ⊔ a) where
+data All {a p} {A : Set a} (P : Pred A p) : ∀ {k} → Pred (Vec A k) p where
   []  : All P []
-  _∷_ : ∀ {k x} {xs : Vec A k} (px : P x) (pxs : All P xs) → All P (x ∷ xs)
+  _∷_ : ∀ {k x xs} (px : P x) (pxs : All P {k} xs) → All P (x ∷ xs)
 
 ------------------------------------------------------------------------
 -- Operations on All
 
-head : ∀ {a p} {A : Set a} {P : A → Set p} {k x} {xs : Vec A k} →
-       All P (x ∷ xs) → P x
-head (px ∷ pxs) = px
+module _ {a p} {A : Set a} {P : Pred A p} where
 
-tail : ∀ {a p} {A : Set a} {P : A → Set p} {k x} {xs : Vec A k} →
-       All P (x ∷ xs) → All P xs
-tail (px ∷ pxs) = pxs
+  head : ∀ {k} {xs : Vec A (suc k)} → All P xs → P (Vec.head xs)
+  head (px ∷ pxs) = px
 
-lookup : ∀ {a p} {A : Set a} {P : A → Set p} {k} {xs : Vec A k} →
-         (i : Fin k) → All P xs → P (Vec.lookup i xs)
-lookup ()      []
-lookup zero    (px ∷ pxs) = px
-lookup (suc i) (px ∷ pxs) = lookup i pxs
+  tail : ∀ {k} {xs : Vec A (suc k)} → All P xs → All P (Vec.tail xs)
+  tail (px ∷ pxs) = pxs
 
-tabulate : ∀ {a p} {A : Set a} {P : A → Set p} {k xs} →
-           (∀ i → P (Vec.lookup i xs)) → All P {k} xs
-tabulate {xs = []}    pxs = []
-tabulate {xs = _ ∷ _} pxs = pxs zero ∷ tabulate (pxs ∘ suc)
+  lookup : ∀ {k xs} (i : Fin k) → All P xs → P (Vec.lookup i xs)
+  lookup ()      []
+  lookup zero    (px ∷ pxs) = px
+  lookup (suc i) (px ∷ pxs) = lookup i pxs
+
+  tabulate : ∀ {k xs} →  (∀ i → P (Vec.lookup i xs)) → All P {k} xs
+  tabulate {xs = []}    pxs = []
+  tabulate {xs = _ ∷ _} pxs = pxs zero ∷ tabulate (pxs ∘ suc)
 
 map : ∀ {a p q} {A : Set a} {P : A → Set p} {Q : A → Set q} {k} →
       P ⊆ Q → All P {k} ⊆ All Q {k}
@@ -63,15 +60,15 @@ zipWith _⊕_ {xs = []}     {[]}     []         []         = []
 zipWith _⊕_ {xs = x ∷ xs} {y ∷ ys} (px ∷ pxs) (qy ∷ qys) =
   px ⊕ qy ∷ zipWith _⊕_ pxs qys
 
-zip : ∀ {a p q k} {A : Set a} {P : A → Set p} {Q : A → Set q} →
-      All P ∩ All Q ⊆ All (P ∩ Q) {k}
-zip ([] , [])             = []
-zip (px ∷ pxs , qx ∷ qxs) = (px , qx) ∷ zip (pxs , qxs)
+module _ {a p q} {A : Set a} {P : Pred A p} {Q : Pred A q} where
 
-unzip : ∀ {a p q k} {A : Set a} {P : A → Set p} {Q : A → Set q} →
-        All (P ∩ Q) {k} ⊆ All P ∩ All Q
-unzip []           = [] , []
-unzip (pqx ∷ pqxs) = Prod.zip _∷_ _∷_ pqx (unzip pqxs)
+  zip : ∀ {k} → All P ∩ All Q ⊆ All (P ∩ Q) {k}
+  zip ([] , [])             = []
+  zip (px ∷ pxs , qx ∷ qxs) = (px , qx) ∷ zip (pxs , qxs)
+
+  unzip : ∀ {k} → All (P ∩ Q) {k} ⊆ All P ∩ All Q
+  unzip []           = [] , []
+  unzip (pqx ∷ pqxs) = Prod.zip _∷_ _∷_ pqx (unzip pqxs)
 
 ------------------------------------------------------------------------
 -- Properties of predicates preserved by All

@@ -19,37 +19,40 @@ open import Relation.Unary
 ------------------------------------------------------------------------
 -- Any P xs means that at least one element in xs satisfies P.
 
-data Any {p} (P : A → Set p) : ∀ {n} → Vec A n → Set (a ⊔ p) where
-  here  : ∀ {n x} {xs : Vec A n} (px  : P x)      → Any P (x ∷ xs)
-  there : ∀ {n x} {xs : Vec A n} (pxs : Any P xs) → Any P (x ∷ xs)
+data Any {p} (P : Pred A p) : ∀ {n} → Vec A n → Set p where
+  here  : ∀ {n x xs} (px  : P x)      → Any P {suc n} (x ∷ xs)
+  there : ∀ {n x xs} (pxs : Any P {n} xs) → Any P {suc n} (x ∷ xs)
 
 ------------------------------------------------------------------------
 -- Operations on Any
 
+module _ {p} {P : Pred A p} where
+
 -- If the head does not satisfy the predicate, then the tail will.
-tail : ∀ {p} {P : A → Set p} {n x} {xs : Vec A n} →
-       ¬ P x → Any P (x ∷ xs) → Any P xs
-tail ¬px (here  px)  = ⊥-elim (¬px px)
-tail ¬px (there pxs) = pxs
+  tail : ∀ {n} {xs : Vec A (suc n)} →
+         ¬ P (Vec.head xs) → Any P xs → Any P (Vec.tail xs)
+  tail {xs = x ∷ xs} ¬px (here px)   = ⊥-elim (¬px px)
+  tail {xs = x ∷ xs} ¬px (there pxs) = pxs
+
+  index : ∀ {n xs} → Any P {n} xs → Fin n
+  index (here  px)  = zero
+  index (there pxs) = suc (index pxs)
+
+-- If any element satisfies P, then P is satisfied.
+  satisfied : ∀ {n xs} → Any P {n} xs → ∃ P
+  satisfied (here px)   = _ , px
+  satisfied (there pxs) = satisfied pxs
 
 map : ∀ {p q} {P : A → Set p} {Q : A → Set q} →
       P ⊆ Q → ∀ {n} → Any P {n} ⊆ Any Q {n}
 map g (here px)   = here (g px)
 map g (there pxs) = there (map g pxs)
 
-index : ∀ {p} {P : A → Set p} {n} {xs : Vec A n} → Any P xs → Fin n
-index (here  px)  = zero
-index (there pxs) = suc (index pxs)
-
--- If any element satisfies P, then P is satisfied.
-satisfied : ∀ {p} {P : A → Set p} {n} {xs : Vec A n} → Any P xs → ∃ P
-satisfied (here px)   = _ , px
-satisfied (there pxs) = satisfied pxs
 
 ------------------------------------------------------------------------
 -- Properties of predicates preserved by Any
 
-module _ {p} {P : A → Set p} where
+module _ {p} {P : Pred A p} where
 
   any : Decidable P → ∀ {n} → Decidable (Any P {n})
   any P? []       = no λ()
