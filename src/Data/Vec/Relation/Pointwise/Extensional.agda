@@ -26,7 +26,7 @@ open import Relation.Nullary
 import Relation.Nullary.Decidable as Dec
 
 record Pointwise {a b ℓ} {A : Set a} {B : Set b} (_∼_ : REL A B ℓ)
-                 {n} (xs : Vec A n) (ys : Vec B n) : Set (a ⊔ b ⊔ ℓ)
+                 {n} (xs : Vec A n) (ys : Vec B n) : Set ℓ
                  where
   constructor ext
   field app : ∀ i → lookup i xs ∼ lookup i ys

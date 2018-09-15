@@ -25,7 +25,7 @@ open import Relation.Nullary
 infixr 5 _∷_
 
 data Pointwise {a b ℓ} {A : Set a} {B : Set b} (_∼_ : REL A B ℓ) :
-               ∀ {m n} (xs : Vec A m) (ys : Vec B n) → Set (a ⊔ b ⊔ ℓ)
+               ∀ {m n} (xs : Vec A m) (ys : Vec B n) → Set ℓ
                where
   []  : Pointwise _∼_ [] []
   _∷_ : ∀ {m n x y} {xs : Vec A m} {ys : Vec B n}
@@ -111,12 +111,12 @@ isDecEquivalence decEquiv n = record
   ; _≟_           = decidable (IsDecEquivalence._≟_ decEquiv)
   }
 
-setoid : ∀ {a ℓ} → Setoid a ℓ → ℕ → Setoid a (a ⊔ ℓ)
+setoid : ∀ {a ℓ} → Setoid a ℓ → ℕ → Setoid a ℓ
 setoid S n = record
    { isEquivalence = isEquivalence (Setoid.isEquivalence S) n
    }
 
-decSetoid : ∀ {a ℓ} → DecSetoid a ℓ → ℕ → DecSetoid a (a ⊔ ℓ)
+decSetoid : ∀ {a ℓ} → DecSetoid a ℓ → ℕ → DecSetoid a ℓ
 decSetoid S n = record
    { isDecEquivalence = isDecEquivalence (DecSetoid.isDecEquivalence S) n
    }
