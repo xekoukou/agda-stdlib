@@ -21,7 +21,7 @@ module _ {a₁ a₂} {A₁ : Set a₁} {A₂ : Set a₂} where
   -- Generalised sum of relations
 
   data ⊎ʳ {ℓ₁ ℓ₂} (P : Set) (_∼₁_ : Rel A₁ ℓ₁) (_∼₂_ : Rel A₂ ℓ₂) :
-          A₁ ⊎ A₂ → A₁ ⊎ A₂ → Set (a₁ ⊔ a₂ ⊔ ℓ₁ ⊔ ℓ₂) where
+          A₁ ⊎ A₂ → A₁ ⊎ A₂ → Set (ℓ₁ ⊔ ℓ₂) where
     ₁∼₂ : ∀ {x y} (p : P)         → ⊎ʳ P _∼₁_ _∼₂_ (inj₁ x) (inj₂ y)
     ₁∼₁ : ∀ {x y} (x∼₁y : x ∼₁ y) → ⊎ʳ P _∼₁_ _∼₂_ (inj₁ x) (inj₁ y)
     ₂∼₂ : ∀ {x y} (x∼₂y : x ∼₂ y) → ⊎ʳ P _∼₁_ _∼₂_ (inj₂ x) (inj₂ y)
