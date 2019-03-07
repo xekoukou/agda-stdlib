@@ -60,10 +60,24 @@ Sets (suc n) (l , ls) = Set l × Sets n ls
 -- we want our `(un)curryₙ` functions to work for user-written functions and
 -- they rarely are ⊤-terminated.
 
+Product′ : ∀ n {ls} → Sets n ls → Set (toLevel n ls)
+Product′ 0       _        = ⊤
+Product′ (suc n) (a , as) = a × Product′ n as
+
 Product : ∀ n {ls} → Sets n ls → Set (toLevel n ls)
 Product 0       _        = ⊤
 Product 1       (a , _)  = a
 Product (suc n) (a , as) = a × Product n as
+
+add⊤ : ∀ n {ls} → {as : Sets n ls} → Product n as → Product′ n as
+add⊤ zero v = tt
+add⊤ (suc zero) v = v , tt
+add⊤ (suc (suc n)) (v , vs) = v , add⊤ (suc n) vs
+
+rem⊤ : ∀ n {ls} → {as : Sets n ls} → Product′ n as → Product n as
+rem⊤ zero v = tt
+rem⊤ (suc zero) (v , _) = v
+rem⊤ (suc (suc n)) (v , vs) = v , rem⊤ (suc n) vs
 
 ------------------------------------------------------------------------
 -- Generic Programs: (un)curry
@@ -113,11 +127,12 @@ Projₙ (_ , as) (suc k) = Projₙ as k
 -- be using a concrete `k` (potentially manufactured using `Data.Fin`'s `#_`)
 -- and it will not be possible to infer `n` from it.
 
-projₙ : ∀ n {ls} {as : Sets n ls} k → Product n as → Projₙ as k
-projₙ 1               zero    v        = v
-projₙ (suc n@(suc _)) zero    (v , _)  = v
-projₙ (suc n@(suc _)) (suc k) (_ , vs) = projₙ n k vs
-projₙ 1 (suc ()) v
+projₙ′ : ∀ {n ls} {as : Sets n ls} k → Product′ n as → Projₙ as k
+projₙ′ zero (v , _) = v
+projₙ′ (suc k) (_ , vs) = projₙ′ k vs
+
+projₙ : ∀ {n ls} {as : Sets n ls} k → Product n as → Projₙ as k
+projₙ k v = projₙ′ k (add⊤ _ v)
 
 ------------------------------------------------------------------------
 -- Generic Programs: removal of the k-th component
@@ -132,13 +147,15 @@ Removeₙ               (_ , as) zero    = as
 Removeₙ {suc (suc _)} (a , as) (suc k) = a , Removeₙ as k
 Removeₙ {1} _ (suc ())
 
+removeₙ′ : ∀ {n ls} {as : Sets n ls} k →
+          Product′ n as → Product′ (pred n) (Removeₙ as k)
+removeₙ′ zero (v , vs) = vs
+removeₙ′ {suc zero} (suc k) (v , vs) = tt
+removeₙ′ {suc (suc n)} (suc k) (v , vs) = v , removeₙ′ k vs
+
 removeₙ : ∀ n {ls} {as : Sets n ls} k →
           Product n as → Product (pred n) (Removeₙ as k)
-removeₙ (suc zero)          zero    _        = _
-removeₙ (suc (suc _))       zero    (_ , vs) = vs
-removeₙ (suc (suc zero))    (suc k) (v , _)  = v
-removeₙ (suc (suc (suc _))) (suc k) (v , vs) = v , removeₙ _ k vs
-removeₙ (suc zero) (suc ()) _
+removeₙ n k vs = rem⊤ _ (removeₙ′ k (add⊤ _ vs))
 
 ------------------------------------------------------------------------
 -- Generic Programs: insertion of a k-th component
@@ -173,7 +190,7 @@ Updateₙ (_ , as) zero    aᵘ = aᵘ , as
 Updateₙ (a , as) (suc k) aᵘ = a , Updateₙ as k aᵘ
 
 updateₙ : ∀ n {ls lᵘ} {as : Sets n ls} k {aᵘ : _ → Set lᵘ} (f : ∀ v → aᵘ v)
-          (vs : Product n as) → Product n (Updateₙ as k (aᵘ (projₙ n k vs)))
+          (vs : Product n as) → Product n (Updateₙ as k (aᵘ (projₙ k vs)))
 updateₙ 1             zero    f v        = f v
 updateₙ (suc (suc _)) zero    f (v , vs) = f v , vs
 updateₙ (suc (suc _)) (suc k) f (v , vs) = v , updateₙ _ k f vs
