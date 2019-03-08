@@ -215,7 +215,7 @@ module _ {a b c d e} {A : Set a} {B : Set b} {C : Set c} {D : Set d} {E : Set e}
 -- find a solution (if possible).
 
   update₂ : (p : A × B × ℕ × C × D) → (A × B × List D × C × D)
-  update₂ = λ p → updateₙ′ 5 (# 2) (λ n → replicate n (projₙ 5 (# 4) p)) p
+  update₂ = λ p → updateₙ′′ 5 (# 2) (λ n → replicate n (projₙ 5 (# 4) p)) p
 
 -----------------------------------------------------------------------
 -- composeₙ : ∀ n → (C → D) → (A₁ → ⋯ Aₙ → D → B) → A₁ → ⋯ → Aₙ → C → B

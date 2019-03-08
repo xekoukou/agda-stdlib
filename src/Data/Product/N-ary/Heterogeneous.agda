@@ -40,6 +40,10 @@ Levels : ℕ → Set
 Levels zero    = ⊤
 Levels (suc n) = Level × Levels n
 
+sucs : ∀ n → Levels n → Levels n
+sucs zero ls = tt
+sucs (suc n) (l , ls) = L.suc l , sucs n ls
+
 -- The overall product's Level will be the least upper bound of all of the
 -- Levels involved.
 
@@ -50,9 +54,13 @@ toLevel (suc n) (l , ls) = l ⊔ toLevel n ls
 -- Second, a "vector" of `n` Sets whose respective Levels are determined
 -- by the `Levels n` input.
 
-Sets : ∀ n (ls : Levels n) → Set (L.suc (toLevel n ls))
-Sets zero    _        = Lift _ ⊤
+Sets : ∀ n (ls : Levels n) → Set (toLevel n (sucs n ls))
+Sets zero    _        = ⊤
 Sets (suc n) (l , ls) = Set l × Sets n ls
+
+sucSets : ∀ n (ls : Levels n) → Sets n (sucs _ ls)
+sucSets zero _ = tt
+sucSets (suc n) (l , ls) = Set l , sucSets n ls
 
 -- Third, the n-ary product itself: provided n Levels and a corresponding
 -- "vector" of `n` Sets, we can build a big right-nested product type packing
@@ -93,17 +101,23 @@ Arrows (suc n) (a , as) b = a → Arrows n as b
 -- Finally, we can define `curryₙ` and `uncurryₙ` converting back and forth
 -- between `A₁ → ⋯ → Aₙ → B` and `(A₁ × ⋯ × Aₙ) → B` by induction on `n`.
 
+curryₙ′ : ∀ n {ls} {as : Sets n ls} {r} {b : Set r} →
+         (Product′ n as → b) → Arrows n as b
+curryₙ′ zero f = f _
+curryₙ′ (suc n) f = curryₙ′ n ∘′ curry f
+
 curryₙ : ∀ n {ls} {as : Sets n ls} {r} {b : Set r} →
          (Product n as → b) → Arrows n as b
-curryₙ 0               f = f _
-curryₙ 1               f = f
-curryₙ (suc n@(suc _)) f = curryₙ n ∘′ curry f
+curryₙ n f = curryₙ′ n (λ v → f (rem⊤ n v))
+
+uncurryₙ′ : ∀ n {ls : Levels n} {as : Sets n ls} {r} {b : Set r} →
+           Arrows n as b → (Product′ n as → b)
+uncurryₙ′ zero f = const f
+uncurryₙ′ (suc n) f = uncurry (uncurryₙ′ n ∘′ f)
 
 uncurryₙ : ∀ n {ls : Levels n} {as : Sets n ls} {r} {b : Set r} →
            Arrows n as b → (Product n as → b)
-uncurryₙ 0               f = const f
-uncurryₙ 1               f = f
-uncurryₙ (suc n@(suc _)) f = uncurry (uncurryₙ n ∘′ f)
+uncurryₙ n f = λ v → uncurryₙ′ n f (add⊤ n v)
 
 ------------------------------------------------------------------------
 -- Generic Programs: projection of the k-th component
@@ -127,12 +141,12 @@ Projₙ (_ , as) (suc k) = Projₙ as k
 -- be using a concrete `k` (potentially manufactured using `Data.Fin`'s `#_`)
 -- and it will not be possible to infer `n` from it.
 
-projₙ′ : ∀ {n ls} {as : Sets n ls} k → Product′ n as → Projₙ as k
-projₙ′ zero (v , _) = v
-projₙ′ (suc k) (_ , vs) = projₙ′ k vs
+projₙ′ : ∀ n {ls} {as : Sets n ls} k → Product′ n as → Projₙ as k
+projₙ′ _ zero (v , _) = v
+projₙ′ _ (suc k) (_ , vs) = projₙ′ _ k vs
 
-projₙ : ∀ {n ls} {as : Sets n ls} k → Product n as → Projₙ as k
-projₙ k v = projₙ′ k (add⊤ _ v)
+projₙ : ∀ n {ls} {as : Sets n ls} k → Product n as → Projₙ as k
+projₙ _ k v = projₙ′ _ k (add⊤ _ v)
 
 ------------------------------------------------------------------------
 -- Generic Programs: removal of the k-th component
@@ -170,13 +184,15 @@ Insertₙ         as       zero    a⁺ = a⁺ , as
 Insertₙ {suc _} (a , as) (suc k) a⁺ = a , Insertₙ as k a⁺
 Insertₙ {zero} _ (suc ()) _
 
+insertₙ′ : ∀ n {ls l⁺} {as : Sets n ls} {a⁺ : Set l⁺} k (v⁺ : a⁺) →
+          Product′ n as → Product′ (suc n) (Insertₙ as k a⁺)
+insertₙ′ n zero v⁺ vs = v⁺ , vs
+insertₙ′ zero (suc ()) v⁺ vs
+insertₙ′ (suc n) (suc k) v⁺ (v , vs) = v , insertₙ′ n k v⁺ vs
+
 insertₙ : ∀ n {ls l⁺} {as : Sets n ls} {a⁺ : Set l⁺} k (v⁺ : a⁺) →
           Product n as → Product (suc n) (Insertₙ as k a⁺)
-insertₙ 0             zero    v⁺ vs       = v⁺
-insertₙ (suc n)       zero    v⁺ vs       = v⁺ , vs
-insertₙ 1             (suc k) v⁺ vs       = vs , insertₙ 0 k v⁺ _
-insertₙ (suc (suc n)) (suc k) v⁺ (v , vs) = v , insertₙ _ k v⁺ vs
-insertₙ 0 (suc ()) _ _
+insertₙ n k v⁺ vs = rem⊤ (suc n) (insertₙ′ n k v⁺ (add⊤ n vs)) 
 
 ------------------------------------------------------------------------
 -- Generic Programs: update of a k-th component
@@ -189,16 +205,19 @@ Updateₙ : ∀ {n ls lᵘ} (as : Sets n ls) k (aᵘ : Set lᵘ) → Sets n (Lev
 Updateₙ (_ , as) zero    aᵘ = aᵘ , as
 Updateₙ (a , as) (suc k) aᵘ = a , Updateₙ as k aᵘ
 
-updateₙ : ∀ n {ls lᵘ} {as : Sets n ls} k {aᵘ : _ → Set lᵘ} (f : ∀ v → aᵘ v)
-          (vs : Product n as) → Product n (Updateₙ as k (aᵘ (projₙ k vs)))
-updateₙ 1             zero    f v        = f v
-updateₙ (suc (suc _)) zero    f (v , vs) = f v , vs
-updateₙ (suc (suc _)) (suc k) f (v , vs) = v , updateₙ _ k f vs
-updateₙ 1 (suc ()) _ _
+updateₙ′ : ∀ n {ls lᵘ} {as : Sets n ls} k {aᵘ : _ → Set lᵘ} (f : ∀ v → aᵘ v)
+          (vs : Product′ n as) → Product′ n (Updateₙ as k (aᵘ (projₙ′ _ k vs)))
+updateₙ′ _ zero f (v , vs) = f v , vs
+updateₙ′ _ (suc k) f (v , vs) = v , updateₙ′ _ k f vs
 
-updateₙ′ : ∀ n {ls lᵘ} {as : Sets n ls} k {aᵘ : Set lᵘ} (f : Projₙ as k → aᵘ) →
+updateₙ : ∀ n {ls lᵘ} {as : Sets n ls} k {aᵘ : _ → Set lᵘ} (f : ∀ v → aᵘ v)
+          (vs : Product n as) → Product n (Updateₙ as k (aᵘ (projₙ _ k vs)))
+updateₙ n k f vs = rem⊤ n (updateₙ′ n k f (add⊤ n vs))
+
+-- TODO I changed the name of this function.
+updateₙ′′ : ∀ n {ls lᵘ} {as : Sets n ls} k {aᵘ : Set lᵘ} (f : Projₙ as k → aᵘ) →
            Product n as → Product n (Updateₙ as k aᵘ)
-updateₙ′ n k = updateₙ n k
+updateₙ′′ n k = updateₙ n k
 
 ------------------------------------------------------------------------
 -- Generic Programs: compose function at the n-th position
