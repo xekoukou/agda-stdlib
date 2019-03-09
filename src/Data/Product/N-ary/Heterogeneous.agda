@@ -161,15 +161,15 @@ Removeₙ               (_ , as) zero    = as
 Removeₙ {suc (suc _)} (a , as) (suc k) = a , Removeₙ as k
 Removeₙ {1} _ (suc ())
 
-removeₙ′ : ∀ {n ls} {as : Sets n ls} k →
+removeₙ′ : ∀ n {ls} {as : Sets n ls} k →
           Product′ n as → Product′ (pred n) (Removeₙ as k)
-removeₙ′ zero (v , vs) = vs
-removeₙ′ {suc zero} (suc k) (v , vs) = tt
-removeₙ′ {suc (suc n)} (suc k) (v , vs) = v , removeₙ′ k vs
+removeₙ′ _ zero (v , vs) = vs
+removeₙ′ (suc zero) (suc ()) (v , vs)
+removeₙ′ (suc (suc n)) (suc k) (v , vs) = v , removeₙ′ (suc n) k vs
 
 removeₙ : ∀ n {ls} {as : Sets n ls} k →
           Product n as → Product (pred n) (Removeₙ as k)
-removeₙ n k vs = rem⊤ _ (removeₙ′ k (add⊤ _ vs))
+removeₙ n k vs = rem⊤ _ (removeₙ′ n k (add⊤ _ vs))
 
 ------------------------------------------------------------------------
 -- Generic Programs: insertion of a k-th component
